@@ -31,6 +31,19 @@
 
 ShutEye is a desktop timer application that allows users to schedule system actions (shutdown, restart, lock screen, etc.) with an intuitive and elegant interface. The app runs in the system tray and provides visual countdown feedback with the ability to adjust timing on the fly.
 
+---
+## Screenshots
+<div align="center">
+
+### Setup Screen
+Configure timer duration and select system action with modern UI and icon-based navigation.
+![Main Window](assets/screenshots/main_win.png)
+
+### Active Timer
+Live countdown with time adjustment, play/pause controls, and action status.
+![Count Down Window](assets/screenshots/countdown.png)
+</div>
+
 ### Target Users
 
 - Users who want to automate system power management
@@ -377,19 +390,6 @@ You can customize the app without touching the code:
 | **Log Out** | Sign out of session | Windows, macOS, Linux |
 
 
----
-## Screenshots
-<div align="center">
-
-### Setup Screen
-Configure timer duration and select system action with modern UI and icon-based navigation.
-![Main Window](assets/screenshots/main_win.png)
-![Main Window](assets/screenshots/main_win2.png)
-
-### Active Timer
-Live countdown with time adjustment, play/pause controls, and action status.
-![Count Down Window](assets/screenshots/countdown.png)
-</div>
 ---
 ##  Contributing
 
