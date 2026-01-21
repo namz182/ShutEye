@@ -48,6 +48,7 @@ class TimerApp(ctk.CTk):
         self.is_running = False
         self.timer_thread: Optional[threading.Thread] = None
         self.selected_action = "Shutdown"
+        self.keep_screen_on = False
 
         # Theme configuration
         theme = self.config.get_theme()
@@ -97,11 +98,17 @@ class TimerApp(ctk.CTk):
     def select_action(self, action: str) -> None:
         """Handle action selection"""
         self.selected_action = action
-        self.show_setup_screen()  # Refresh to update selection
+        # Update action cards without reloading the screen
+        if hasattr(self.setup_screen, 'update_action_selection'):
+            self.setup_screen.update_action_selection(action)
 
     def add_time(self, seconds: int) -> None:
         """Add time to the timer during setup"""
         self.total_seconds += seconds
+        # Ensure time doesn't go below minimum (60 seconds)
+        timer_config = self.config.get_timer_config()
+        min_duration = timer_config.get("min_duration", 60)
+        self.total_seconds = max(min_duration, self.total_seconds)
         self.remaining_seconds = self.total_seconds
         self.setup_screen.update_display()
 
@@ -128,10 +135,11 @@ class TimerApp(ctk.CTk):
     def add_time_active(self, seconds: int) -> None:
         """Add or subtract time during active countdown"""
         self.remaining_seconds += seconds
-        # Ensure remaining time is non-negative
-        self.remaining_seconds = max(0, self.remaining_seconds)
+        # Ensure remaining time doesn't go below minimum (60 seconds)
+        timer_config = self.config.get_timer_config()
+        min_duration = timer_config.get("min_duration", 60)
+        self.remaining_seconds = max(min_duration, self.remaining_seconds)
         self.total_seconds = max(self.total_seconds, self.remaining_seconds)
-        self.active_screen.slider.set(self.remaining_seconds)
         self.active_screen.update_display()
 
     def start_timer(self) -> None:

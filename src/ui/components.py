@@ -163,7 +163,11 @@ class CTkActionCard(ctk.CTkFrame):
         
         self.is_selected = is_selected
         self.primary_color = primary_color
+        self.card_bg = card_bg
         self.on_click = on_click
+        self.icon_label = None
+        self.check_label = None
+        
         self.bind("<Button-1>", lambda e: on_click() if on_click else None)
         
         inner_frame = ctk.CTkFrame(self, fg_color="transparent")
@@ -175,14 +179,14 @@ class CTkActionCard(ctk.CTkFrame):
             img = Image.open(icon_path)
             img = img.resize((40, 40), Image.Resampling.LANCZOS)
             icon_image = ctk.CTkImage(light_image=img, size=(40, 40))
-            icon_label = ctk.CTkLabel(
+            self.icon_label = ctk.CTkLabel(
                 inner_frame, image=icon_image, text="",
                 fg_color=primary_color if is_selected else "#2d3748",
                 width=40, height=40, corner_radius=8
             )
-            icon_label.image = icon_image
-            icon_label.pack(side="left", padx=(0, 15))
-            icon_label.bind("<Button-1>", lambda e: on_click() if on_click else None)
+            self.icon_label.image = icon_image
+            self.icon_label.pack(side="left", padx=(0, 15))
+            self.icon_label.bind("<Button-1>", lambda e: on_click() if on_click else None)
         except Exception:
             pass  # Icon loading failed, continue without it
         
@@ -207,25 +211,75 @@ class CTkActionCard(ctk.CTkFrame):
         desc_label.pack(fill="x")
         desc_label.bind("<Button-1>", lambda e: on_click() if on_click else None)
         
-        # Checkmark
+        # Checkmark icon
         if is_selected:
-            check_label = ctk.CTkLabel(
-                inner_frame, text="",
-                font=ctk.CTkFont(size=20), text_color=primary_color
-            )
-            check_label.pack(side="right")
-            check_label.bind("<Button-1>", lambda e: on_click() if on_click else None)
+            try:
+                from src.constants import ICON_CHECK
+                check_img = Image.open(ICON_CHECK)
+                check_img = check_img.resize((20, 20), Image.Resampling.LANCZOS)
+                check_icon = ctk.CTkImage(light_image=check_img, dark_image=check_img, size=(20, 20))
+                self.check_label = ctk.CTkLabel(
+                    inner_frame, text="", image=check_icon
+                )
+                self.check_label.image = check_icon
+                self.check_label.pack(side="right")
+                self.check_label.bind("<Button-1>", lambda e: on_click() if on_click else None)
+            except Exception:
+                # Fallback to text checkmark
+                self.check_label = ctk.CTkLabel(
+                    inner_frame, text="✓",
+                    font=ctk.CTkFont(size=20), text_color=primary_color
+                )
+                self.check_label.pack(side="right")
+                self.check_label.bind("<Button-1>", lambda e: on_click() if on_click else None)
 
     def set_selected(self, selected: bool) -> None:
         """Update selection state"""
+        if self.is_selected == selected:
+            return  # No change needed
+            
         self.is_selected = selected
         if selected:
             self.configure(
                 fg_color="#1a3a6b", border_width=2,
                 border_color=self.primary_color
             )
+            # Update icon background
+            if self.icon_label:
+                self.icon_label.configure(fg_color=self.primary_color)
+            # Add checkmark icon if not present
+            if not self.check_label or not self.check_label.winfo_exists():
+                # Find the inner frame (parent of icon_label)
+                if self.icon_label:
+                    inner_frame = self.icon_label.master
+                    try:
+                        from src.constants import ICON_CHECK
+                        check_img = Image.open(ICON_CHECK)
+                        check_img = check_img.resize((20, 20), Image.Resampling.LANCZOS)
+                        check_icon = ctk.CTkImage(light_image=check_img, dark_image=check_img, size=(20, 20))
+                        self.check_label = ctk.CTkLabel(
+                            inner_frame, text="", image=check_icon
+                        )
+                        self.check_label.image = check_icon
+                        self.check_label.pack(side="right")
+                        self.check_label.bind("<Button-1>", lambda e: self.on_click() if self.on_click else None)
+                    except Exception:
+                        # Fallback to text checkmark
+                        self.check_label = ctk.CTkLabel(
+                            inner_frame, text="✓",
+                            font=ctk.CTkFont(size=20), text_color=self.primary_color
+                        )
+                        self.check_label.pack(side="right")
+                        self.check_label.bind("<Button-1>", lambda e: self.on_click() if self.on_click else None)
         else:
-            self.configure(fg_color="#1c2633", border_width=0)
+            self.configure(fg_color=self.card_bg, border_width=0)
+            # Update icon background
+            if self.icon_label:
+                self.icon_label.configure(fg_color="#2d3748")
+            # Remove checkmark
+            if self.check_label and self.check_label.winfo_exists():
+                self.check_label.destroy()
+                self.check_label = None
 
 
 class CTkQuickButton(ctk.CTkButton):

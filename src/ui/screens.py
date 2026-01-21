@@ -174,6 +174,7 @@ class SetupScreen:
         self.app = app
         self.config = app.config
         self.start_btn_setup = None
+        self.action_cards = {}  # Store references to action cards
 
     def show(self) -> None:
         """Display the timer setup screen"""
@@ -181,10 +182,8 @@ class SetupScreen:
         for widget in self.app.winfo_children():
             widget.destroy()
 
-        # Main container with scrollable frame
-        main_container = CTkScrollableSection(
-            self.app, fg_color=self.app.bg_dark
-        )
+        # Main container
+        main_container = ctk.CTkFrame(self.app, fg_color=self.app.bg_dark)
         main_container.pack(fill="both", expand=True, padx=0, pady=0)
 
         # Header
@@ -198,9 +197,17 @@ class SetupScreen:
         )
         header.pack(fill="x", padx=20, pady=(20, 10))
 
+        # Content container - horizontal layout
+        content_container = ctk.CTkFrame(main_container, fg_color=self.app.bg_dark)
+        content_container.pack(fill="both", expand=True, padx=20, pady=10)
+
+        # Left side - Timer Controls
+        left_panel = ctk.CTkFrame(content_container, fg_color=self.app.bg_dark)
+        left_panel.pack(side="left", fill="both", expand=True, padx=(0, 10))
+
         # Time Display
-        time_frame = ctk.CTkFrame(main_container, fg_color=self.app.bg_dark)
-        time_frame.pack(pady=30)
+        time_frame = ctk.CTkFrame(left_panel, fg_color=self.app.bg_dark)
+        time_frame.pack(pady=(20, 15))
 
         self.setup_time_display = CTkLabel(
             time_frame, text=format_time_display(self.app.total_seconds),
@@ -215,8 +222,8 @@ class SetupScreen:
         time_label.pack(pady=(5, 0))
 
         # +/- Buttons for 1 minute adjustment
-        adjust_frame = ctk.CTkFrame(main_container, fg_color=self.app.bg_dark)
-        adjust_frame.pack(pady=10)
+        adjust_frame = ctk.CTkFrame(left_panel, fg_color=self.app.bg_dark)
+        adjust_frame.pack(pady=(10, 10))
 
         minus_btn = ctk.CTkButton(
             adjust_frame, text="-", width=60, height=40,
@@ -239,52 +246,9 @@ class SetupScreen:
         )
         plus_btn.pack(side="left", padx=5)
 
-        # Quick Add Section
-        quick_add_label = CTkLabel(
-            main_container, text="Quick Add",
-            style="heading2", anchor="w"
-        )
-        quick_add_label.pack(fill="x", padx=20, pady=(20, 10))
-
-        # Quick add buttons grid
-        quick_frame = ctk.CTkFrame(main_container, fg_color=self.app.bg_dark)
-        quick_frame.pack(fill="x", padx=20, pady=10)
-
-        quick_times = self.config.get_quick_times()
-
-        for i, item in enumerate(quick_times):
-            btn = CTkQuickButton(
-                quick_frame, text=item["label"],
-                command=lambda s=item["seconds"]: self.app.add_time(s),
-                card_bg=self.app.card_bg
-            )
-            btn.grid(row=i//3, column=i%3, padx=5, pady=5, sticky="ew")
-
-        quick_frame.grid_columnconfigure(0, weight=1)
-        quick_frame.grid_columnconfigure(1, weight=1)
-        quick_frame.grid_columnconfigure(2, weight=1)
-
-        # System Action Section
-        action_label = CTkLabel(
-            main_container, text="System Action",
-            style="heading2", anchor="w"
-        )
-        action_label.pack(fill="x", padx=20, pady=(30, 10))
-
-        # Action cards
-        actions = self.config.get_actions()
-
-        for action in actions:
-            self._create_action_card(
-                main_container,
-                action["name"],
-                action.get("icon", ""),
-                action["description"]
-            )
-
         # Start Button
-        start_container = ctk.CTkFrame(main_container, fg_color=self.app.bg_dark)
-        start_container.pack(fill="x", padx=20, pady=30)
+        start_container = ctk.CTkFrame(left_panel, fg_color=self.app.bg_dark)
+        start_container.pack(fill="x", pady=(10, 15))
 
         # Use stopwatch icon for start button
         try:
@@ -313,6 +277,65 @@ class SetupScreen:
             )
         self.start_btn_setup.pack(fill="x")
 
+        # Keep screen on checkbox
+        self.keep_screen_on_var = ctk.BooleanVar(value=self.app.keep_screen_on)
+        keep_screen_checkbox = ctk.CTkCheckBox(
+            left_panel,
+            text="Keep screen on",
+            variable=self.keep_screen_on_var,
+            command=lambda: setattr(self.app, 'keep_screen_on', self.keep_screen_on_var.get()),
+            font=ctk.CTkFont(size=14),
+            fg_color=self.app.primary_color,
+            hover_color="#1557b0"
+        )
+        keep_screen_checkbox.pack(pady=(10, 15))
+
+        # Quick Add Section
+        quick_add_label = CTkLabel(
+            left_panel, text="Quick Add",
+            style="heading2", anchor="w"
+        )
+        quick_add_label.pack(fill="x", pady=(10, 10))
+
+        # Quick add buttons grid (2 columns for desktop)
+        quick_frame = ctk.CTkFrame(left_panel, fg_color=self.app.bg_dark)
+        quick_frame.pack(fill="x", pady=5)
+
+        quick_times = self.config.get_quick_times()
+
+        for i, item in enumerate(quick_times):
+            btn = CTkQuickButton(
+                quick_frame, text=item["label"],
+                command=lambda s=item["seconds"]: self.app.add_time(s),
+                card_bg=self.app.card_bg
+            )
+            btn.grid(row=i//2, column=i%2, padx=5, pady=5, sticky="ew")
+
+        quick_frame.grid_columnconfigure(0, weight=1)
+        quick_frame.grid_columnconfigure(1, weight=1)
+
+        # Right side - System Actions
+        right_panel = CTkScrollableSection(content_container, fg_color=self.app.bg_dark)
+        right_panel.pack(side="right", fill="both", expand=True, padx=(10, 0))
+
+        # System Action Section
+        action_label = CTkLabel(
+            right_panel, text="System Action",
+            style="heading2", anchor="w"
+        )
+        action_label.pack(fill="x", pady=(10, 10))
+
+        # Action cards
+        actions = self.config.get_actions()
+
+        for action in actions:
+            self._create_action_card(
+                right_panel,
+                action["name"],
+                action.get("icon", ""),
+                action["description"]
+            )
+
     def _create_action_card(
         self,
         parent,
@@ -337,7 +360,9 @@ class SetupScreen:
             card_bg=self.app.card_bg,
             bg_dark=self.app.bg_dark
         )
-        card.pack(fill="x", padx=20, pady=5)
+        card.pack(fill="x", padx=5, pady=5)
+        # Store reference to the card
+        self.action_cards[action] = card
 
     def update_display(self) -> None:
         """Update setup display with current time"""
@@ -347,6 +372,12 @@ class SetupScreen:
         self.start_btn_setup.configure(
             text=f"Start Timer ({format_time_simple(self.app.total_seconds)})"
         )
+
+    def update_action_selection(self, selected_action: str) -> None:
+        """Update action card selection without reloading"""
+        for action_name, card in self.action_cards.items():
+            if hasattr(card, 'set_selected'):
+                card.set_selected(action_name == selected_action)
 
 
 class ActiveScreen:
@@ -379,39 +410,19 @@ class ActiveScreen:
             fg_color=self.app.bg_dark,
             height=60
         )
-        header.pack(fill="x", padx=20, pady=20)
+        header.pack(fill="x", padx=20, pady=(20, 10))
 
-        # Action Display - Show what action will be performed
-        action_frame = ctk.CTkFrame(main_container, fg_color=self.app.bg_dark)
-        action_frame.pack(pady=(20, 10))
+        # Content container - horizontal layout
+        content_container = ctk.CTkFrame(main_container, fg_color=self.app.bg_dark)
+        content_container.pack(fill="both", expand=True, padx=20, pady=10)
 
-        # Get action display text
-        action_texts = {
-            "Shutdown": "SHUTTING DOWN",
-            "Restart": "RESTARTING",
-            "Sleep": "SLEEPING",
-            "Lock": "LOCKING",
-            "Log Out": "LOGGING OUT"
-        }
-        action_display_text = action_texts.get(self.app.selected_action, self.app.selected_action)
-
-        self.action_display_label = CTkLabel(
-            action_frame,
-            text=action_display_text,
-            style="heading2"
-        )
-        self.action_display_label.pack(pady=(0, 5))
-
-        action_subtitle = CTkLabel(
-            action_frame,
-            text="IN",
-            style="caption"
-        )
-        action_subtitle.pack()
+        # Left side - Timer Display and Controls
+        left_panel = ctk.CTkFrame(content_container, fg_color=self.app.bg_dark)
+        left_panel.pack(side="left", fill="both", expand=True, padx=(0, 10))
 
         # Timer Display
-        timer_container = ctk.CTkFrame(main_container, fg_color=self.app.bg_dark)
-        timer_container.pack(expand=True, pady=40)
+        timer_container = ctk.CTkFrame(left_panel, fg_color=self.app.bg_dark)
+        timer_container.pack(pady=(20, 20))
 
         self.timer_display = CTkTimerDisplay(
             timer_container,
@@ -421,8 +432,8 @@ class ActiveScreen:
         self.timer_display.pack()
 
         # Control Buttons
-        control_frame = ctk.CTkFrame(timer_container, fg_color="transparent")
-        control_frame.pack(pady=30)
+        control_frame = ctk.CTkFrame(left_panel, fg_color="transparent")
+        control_frame.pack(pady=(20, 20))
 
         from src.constants import ICON_REDO, ICON_PLAY, ICON_STOP
         from PIL import Image
@@ -488,11 +499,52 @@ class ActiveScreen:
             )
         stop_btn.pack(side="left", padx=10)
 
-        # Time Adjustment Section
-        adjust_frame = ctk.CTkFrame(
-            main_container, fg_color=self.app.card_bg, corner_radius=12
+        # Right side - Details and Adjustments
+        right_panel = CTkScrollableSection(content_container, fg_color=self.app.bg_dark)
+        right_panel.pack(side="right", fill="both", expand=True, padx=(10, 0))
+
+        # Action Display - Show what action will be performed
+        action_frame = ctk.CTkFrame(right_panel, fg_color=self.app.card_bg, corner_radius=12)
+        action_frame.pack(fill="x", pady=(10, 15))
+
+        action_inner = ctk.CTkFrame(action_frame, fg_color="transparent")
+        action_inner.pack(fill="x", padx=20, pady=20)
+
+        # Get action display text
+        action_texts = {
+            "Shutdown": "SHUTTING DOWN",
+            "Restart": "RESTARTING",
+            "Sleep": "SLEEPING",
+            "Lock": "LOCKING",
+            "Log Out": "LOGGING OUT"
+        }
+        action_display_text = action_texts.get(self.app.selected_action, self.app.selected_action)
+
+        self.action_display_label = CTkLabel(
+            action_inner,
+            text=action_display_text,
+            style="heading2"
         )
-        adjust_frame.pack(fill="x", padx=20, pady=10)
+        self.action_display_label.pack(pady=(0, 5))
+
+        action_subtitle = CTkLabel(
+            action_inner,
+            text="AT",
+            style="caption"
+        )
+        action_subtitle.pack(pady=(0, 5))
+
+        # End time display
+        self.status_label = CTkLabel(
+            action_inner,
+            text=get_end_time(self.app.remaining_seconds),
+            style="heading3"
+        )
+        self.status_label.pack()
+
+        # Time Adjustment Section
+        adjust_frame = ctk.CTkFrame(right_panel, fg_color=self.app.card_bg, corner_radius=12)
+        adjust_frame.pack(fill="x", pady=(0, 10))
 
         adjust_inner = ctk.CTkFrame(adjust_frame, fg_color="transparent")
         adjust_inner.pack(fill="x", padx=20, pady=20)
@@ -518,7 +570,7 @@ class ActiveScreen:
 
         minus_btn = ctk.CTkButton(
             button_frame, text="-", width=50, height=40,
-            fg_color=self.app.card_bg, hover_color="#3a4556",
+            fg_color=self.app.bg_dark, hover_color="#3a4556",
             font=ctk.CTkFont(size=20, weight="bold"),
             command=lambda: self.app.add_time_active(-60)
         )
@@ -526,14 +578,14 @@ class ActiveScreen:
 
         # Scrollable adjustment label in the middle
         scroll_label = CTkLabel(
-            button_frame, text="Scroll or use buttons to adjust",
+            button_frame, text="1 Minute",
             style="caption"
         )
         scroll_label.pack(side="left", fill="x", expand=True, padx=10)
 
         plus_btn = ctk.CTkButton(
             button_frame, text="+", width=50, height=40,
-            fg_color=self.app.card_bg, hover_color="#3a4556",
+            fg_color=self.app.bg_dark, hover_color="#3a4556",
             font=ctk.CTkFont(size=20, weight="bold"),
             command=lambda: self.app.add_time_active(60)
         )
@@ -558,9 +610,16 @@ class ActiveScreen:
         button_frame.bind("<Button-5>", on_scroll)
         button_frame.bind("<MouseWheel>", on_scroll)
 
+        # Quick Add Section
+        quick_add_label = CTkLabel(
+            right_panel, text="Quick Add",
+            style="heading3", anchor="w"
+        )
+        quick_add_label.pack(fill="x", pady=(10, 10))
+
         # Quick add buttons
-        quick_frame = ctk.CTkFrame(main_container, fg_color=self.app.bg_dark)
-        quick_frame.pack(fill="x", padx=20, pady=10)
+        quick_frame = ctk.CTkFrame(right_panel, fg_color=self.app.bg_dark)
+        quick_frame.pack(fill="x", pady=5)
 
         quick_times = [("+5m", 300), ("+15m", 900), ("+30m", 1800)]
 
@@ -570,15 +629,7 @@ class ActiveScreen:
                 command=lambda s=seconds: self.app.add_time_active(s),
                 card_bg=self.app.card_bg
             )
-            btn.pack(side="left", expand=True, padx=5)
-
-        # Status Footer
-        self.status_label = CTkLabel(
-            main_container,
-            text=f"System will {self.app.selected_action} at {get_end_time(self.app.remaining_seconds)}",
-            style="caption"
-        )
-        self.status_label.pack(pady=20)
+            btn.pack(side="left", expand=True, padx=3)
 
         # Update display
         self.update_display()
@@ -593,16 +644,16 @@ class ActiveScreen:
                 self.duration_label.configure(text=format_time_simple(self.app.remaining_seconds))
             if self.status_label and self.status_label.winfo_exists():
                 self.status_label.configure(
-                    text=f"System will {self.app.selected_action} at {get_end_time(self.app.remaining_seconds)}"
+                    text=get_end_time(self.app.remaining_seconds)
                 )
             # Update action display label if it exists
             if hasattr(self, 'action_display_label') and self.action_display_label.winfo_exists():
                 action_texts = {
-                    "Shutdown": "Shutting Down",
-                    "Restart": "Restarting",
-                    "Sleep": "Sleeping",
-                    "Lock": "Locking",
-                    "Log Out": "Logging Out"
+                    "Shutdown": "SHUTTING DOWN",
+                    "Restart": "RESTARTING",
+                    "Sleep": "SLEEPING",
+                    "Lock": "LOCKING",
+                    "Log Out": "LOGGING OUT"
                 }
                 action_display_text = action_texts.get(self.app.selected_action, self.app.selected_action)
                 self.action_display_label.configure(text=action_display_text)

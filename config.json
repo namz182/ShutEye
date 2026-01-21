@@ -19,11 +19,11 @@
     "text_secondary": "#9ca8ba"
   },
   "window": {
-    "width": 400,
-    "height": 700,
+    "width": 850,
+    "height": 650,
     "resizable": false,
-    "min_width": 350,
-    "min_height": 500
+    "min_width": 600,
+    "min_height": 450
   },
   "timer": {
     "default_duration": 900,
