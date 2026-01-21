@@ -1,0 +1,74 @@
+{
+  "app": {
+    "name": "ShutEye",
+    "version": "21.01.26",
+    "description": "Schedule system actions with an elegant timer interface"
+  },
+  "developer": {
+    "name": "Mainza Namangani",
+    "website": "https://mainza-namangani.rf.gd"
+  },
+  "theme": {
+    "appearance_mode": "dark",
+    "color_theme": "blue",
+    "primary_color": "#1973f0",
+    "bg_dark": "#101822",
+    "card_bg": "#1c2633",
+    "accent_color": "#3a4556",
+    "text_primary": "#ffffff",
+    "text_secondary": "#9ca8ba"
+  },
+  "window": {
+    "width": 400,
+    "height": 700,
+    "resizable": false,
+    "min_width": 350,
+    "min_height": 500
+  },
+  "timer": {
+    "default_duration": 900,
+    "min_duration": 60,
+    "max_duration": 86400,
+    "step_size": 60
+  },
+  "quick_times": [
+    {"label": "+5 min", "seconds": 300},
+    {"label": "+15 min", "seconds": 900},
+    {"label": "+30 min", "seconds": 1800},
+    {"label": "+1 hour", "seconds": 3600},
+    {"label": "+2 hours", "seconds": 7200},
+    {"label": "+4 hours", "seconds": 14400}
+  ],
+  "actions": [
+    {
+      "name": "Shutdown",
+      "icon": "power.png",
+      "description": "Closes all apps and turns off the PC."
+    },
+    {
+      "name": "Restart",
+      "icon": "redo.png",
+      "description": "Closes all apps and reboots the PC."
+    },
+    {
+      "name": "Sleep",
+      "icon": "moon-sleep.png",
+      "description": "PC stays on but uses very low power."
+    },
+    {
+      "name": "Lock",
+      "icon": "lock.png",
+      "description": "Protects your account from access."
+    },
+    {
+      "name": "Log Out",
+      "icon": "logout.png",
+      "description": "Closes session and returns to login."
+    }
+  ],
+  "notifications": {
+    "enabled": true,
+    "warning_minutes": 5,
+    "final_warning_seconds": 60
+  }
+}
