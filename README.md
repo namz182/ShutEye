@@ -58,7 +58,7 @@ ShutEye is a desktop timer application that allows users to schedule system acti
 
 1. **Clone or download the repository**
    ```bash
-   git clone https://github.com/namz182/shuteye
+   git clone https://github.com/namz182/ShutEye.git
    cd ShutEye
    ```
 
@@ -378,8 +378,8 @@ You can customize the app without touching the code:
 
 
 ---
-
 ## Screenshots
+<div align="center">
 
 ### Setup Screen
 Configure timer duration and select system action with modern UI and icon-based navigation.
@@ -389,7 +389,7 @@ Configure timer duration and select system action with modern UI and icon-based 
 ### Active Timer
 Live countdown with time adjustment, play/pause controls, and action status.
 ![Count Down Window](assets/screenshots/countdown.png)
-
+</div>
 ---
 ##  Contributing
 
@@ -415,17 +415,12 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 
 ---
 
-## Developer
-
-**Mainza Namangani** 
-
-[https://mainza-namangani.rf.gd](https://mainza-namangani.rf.gd)
-
----
-
 <div align="center">
 
 **Made with ❤️ by Mainza Namangani**
+
+[https://mainza-namangani.rf.gd](https://mainza-namangani.rf.gd)
+
 
 ⭐ Star this repository if you find it helpful!
 
