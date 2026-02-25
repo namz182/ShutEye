@@ -9,7 +9,7 @@ from src.utils.time_utils import (
     get_end_time,
     is_valid_duration,
 )
-from src.utils.system_actions import SystemActionExecutor
+from src.utils.system_actions import SystemActionExecutor, ScreenInhibitor
 
 __all__ = [
     "format_time_display",
@@ -19,4 +19,5 @@ __all__ = [
     "get_end_time",
     "is_valid_duration",
     "SystemActionExecutor",
+    "ScreenInhibitor",
 ]

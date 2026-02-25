@@ -3,6 +3,7 @@ System action execution module for cross-platform support
 """
 import os
 import platform
+import subprocess
 from typing import Callable, Optional
 
 
@@ -94,3 +95,167 @@ class SystemActionExecutor:
             actions[action]()
         else:
             raise ValueError(f"Unknown action: {action}")
+
+
+class ScreenInhibitor:
+    """Prevent screen from turning off or locking"""
+    
+    def __init__(self):
+        self.system = platform.system()
+        self.process = None
+        self.is_inhibited = False
+    
+    def inhibit(self) -> bool:
+        """Prevent screen from turning off"""
+        if self.is_inhibited:
+            return True
+        
+        try:
+            if self.system == "Linux":
+                return self._inhibit_linux()
+            elif self.system == "Darwin":
+                return self._inhibit_macos()
+            elif self.system == "Windows":
+                return self._inhibit_windows()
+        except Exception as e:
+            print(f"Failed to inhibit screen: {e}")
+            return False
+        
+        return False
+    
+    def uninhibit(self) -> None:
+        """Allow screen to turn off normally"""
+        if not self.is_inhibited:
+            return
+        
+        try:
+            if self.system == "Linux":
+                self._uninhibit_linux()
+            elif self.system == "Darwin":
+                self._uninhibit_macos()
+            elif self.system == "Windows":
+                self._uninhibit_windows()
+        except Exception as e:
+            print(f"Failed to uninhibit screen: {e}")
+        
+        self.is_inhibited = False
+    
+    def _inhibit_linux(self) -> bool:
+        """Linux-specific screen inhibit using systemd-inhibit or xdg-screensaver"""
+        # Try systemd-inhibit first (modern approach)
+        try:
+            # Check if systemd-inhibit is available
+            result = subprocess.run(
+                ["which", "systemd-inhibit"],
+                capture_output=True,
+                timeout=2
+            )
+            
+            if result.returncode == 0:
+                # Use systemd-inhibit to prevent idle/sleep
+                self.process = subprocess.Popen(
+                    [
+                        "systemd-inhibit",
+                        "--what=idle:sleep",
+                        "--who=ShutEye",
+                        "--why=Timer is active",
+                        "--mode=block",
+                        "sleep", "infinity"
+                    ],
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.DEVNULL
+                )
+                self.is_inhibited = True
+                return True
+        except Exception:
+            pass
+        
+        # Fallback to xdg-screensaver
+        try:
+            subprocess.run(
+                ["xdg-screensaver", "suspend", str(os.getpid())],
+                check=True,
+                timeout=2
+            )
+            self.is_inhibited = True
+            return True
+        except Exception:
+            pass
+        
+        return False
+    
+    def _uninhibit_linux(self) -> None:
+        """Linux-specific uninhibit"""
+        if self.process:
+            try:
+                self.process.terminate()
+                self.process.wait(timeout=2)
+            except Exception:
+                try:
+                    self.process.kill()
+                except Exception:
+                    pass
+            self.process = None
+        
+        # Also try to resume xdg-screensaver
+        try:
+            subprocess.run(
+                ["xdg-screensaver", "resume", str(os.getpid())],
+                timeout=2
+            )
+        except Exception:
+            pass
+    
+    def _inhibit_macos(self) -> bool:
+        """macOS-specific screen inhibit using caffeinate"""
+        try:
+            self.process = subprocess.Popen(
+                ["caffeinate", "-d"],  # -d prevents display from sleeping
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL
+            )
+            self.is_inhibited = True
+            return True
+        except Exception as e:
+            print(f"Failed to start caffeinate: {e}")
+            return False
+    
+    def _uninhibit_macos(self) -> None:
+        """macOS-specific uninhibit"""
+        if self.process:
+            try:
+                self.process.terminate()
+                self.process.wait(timeout=2)
+            except Exception:
+                try:
+                    self.process.kill()
+                except Exception:
+                    pass
+            self.process = None
+    
+    def _inhibit_windows(self) -> bool:
+        """Windows-specific screen inhibit using SetThreadExecutionState"""
+        try:
+            import ctypes
+            ES_CONTINUOUS = 0x80000000
+            ES_DISPLAY_REQUIRED = 0x00000002
+            ES_SYSTEM_REQUIRED = 0x00000001
+            
+            ctypes.windll.kernel32.SetThreadExecutionState(
+                ES_CONTINUOUS | ES_DISPLAY_REQUIRED | ES_SYSTEM_REQUIRED
+            )
+            self.is_inhibited = True
+            return True
+        except Exception as e:
+            print(f"Failed to set Windows execution state: {e}")
+            return False
+    
+    def _uninhibit_windows(self) -> None:
+        """Windows-specific uninhibit"""
+        try:
+            import ctypes
+            ES_CONTINUOUS = 0x80000000
+            
+            ctypes.windll.kernel32.SetThreadExecutionState(ES_CONTINUOUS)
+        except Exception as e:
+            print(f"Failed to reset Windows execution state: {e}")

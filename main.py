@@ -13,6 +13,7 @@ from src.config import ConfigManager
 from src.constants import CONFIG_FILE, APP_LOGO
 from src.ui.screens import SetupScreen, ActiveScreen, SettingsScreen
 from src.utils import SystemActionExecutor, format_time_simple, seconds_to_hms_strings
+from src.utils.system_actions import ScreenInhibitor
 from src.utils.time_utils import get_end_time
 
 # Set appearance mode and color theme
@@ -58,6 +59,9 @@ class TimerApp(ctk.CTk):
 
         # Configure window background
         self.configure(fg_color=self.bg_dark)
+
+        # Screen inhibitor for keep screen on feature
+        self.screen_inhibitor = ScreenInhibitor()
 
         # Initialize screens
         self.setup_screen = SetupScreen(self)
@@ -147,6 +151,15 @@ class TimerApp(ctk.CTk):
         if not self.is_running:
             self.is_running = True
             self.active_screen.update_play_pause_btn(True)
+            
+            # Enable screen inhibitor if keep_screen_on is enabled
+            if self.keep_screen_on:
+                success = self.screen_inhibitor.inhibit()
+                if success:
+                    print("Screen will stay on during timer")
+                else:
+                    print("Warning: Could not enable keep screen on")
+            
             self.timer_thread = threading.Thread(target=self._countdown, daemon=True)
             self.timer_thread.start()
 
@@ -161,6 +174,9 @@ class TimerApp(ctk.CTk):
         """Pause the timer"""
         self.is_running = False
         self.active_screen.update_play_pause_btn(False)
+        
+        # Disable screen inhibitor when paused
+        self.screen_inhibitor.uninhibit()
 
     def reset_timer(self) -> None:
         """Reset timer to initial value"""
@@ -168,11 +184,18 @@ class TimerApp(ctk.CTk):
         self.remaining_seconds = self.total_seconds
         self.active_screen.update_play_pause_btn(False)
         self.active_screen.update_display()
+        
+        # Disable screen inhibitor when reset
+        self.screen_inhibitor.uninhibit()
 
     def stop_timer(self) -> None:
         """Stop timer and return to setup"""
         self.is_running = False
         self.remaining_seconds = self.total_seconds
+        
+        # Disable screen inhibitor when stopped
+        self.screen_inhibitor.uninhibit()
+        
         self.show_setup_screen()
 
     def _countdown(self) -> None:
@@ -189,6 +212,10 @@ class TimerApp(ctk.CTk):
     def execute_action(self) -> None:
         """Execute the selected system action"""
         self.is_running = False
+        
+        # Disable screen inhibitor before executing action
+        self.screen_inhibitor.uninhibit()
+        
         try:
             SystemActionExecutor.execute(self.selected_action)
         except Exception as e:
